@@ -1,0 +1,213 @@
+Python 3.8.2 (tags/v3.8.2:7b3ab59, Feb 25 2020, 23:03:10) [MSC v.1916 64 bit (AMD64)] on win32
+Type "help", "copyright", "credits" or "license()" for more information.
+>>> 
+>>> #  Example 1:
+    #my first example is the same as R-script (same hypothesis):
+import numpy as np
+import pandas as pd
+import statsmodels.api as sm
+from scipy.stats import ttest_ind, f_oneway, chi2_contingency
+
+# Set the seed for reproducibility
+np.random.seed(123)
+
+# To define the sample size for patients and controls
+n_patients = 750
+n_controls = 750
+
+# Simulate data for patients and controls
+data = pd.DataFrame({
+    'age': np.random.normal(50, 10, n_patients + n_controls),  # Normally distributed ages
+    'sex': np.random.choice(['Male', 'Female'], n_patients + n_controls),  # Randomly assigned sex
+    'vitamin_d': np.random.normal(20, 5, n_patients + n_controls),  # Normally distributed vitamin D levels
+    'red_meat': np.random.normal(100, 20, n_patients + n_controls),  # Normally distributed red meat consumption
+    'fish': np.random.normal(50, 10, n_patients + n_controls),  # Normally distributed fish consumption
+    'olive_oil': np.random.normal(30, 5, n_patients + n_controls),  # Normally distributed olive oil consumption
+    'family_history': np.random.choice(['Yes', 'No'], n_patients + n_controls),  # Random family history of cancer
+    'bladder_cancer': np.repeat(['Patient', 'Control'], [n_patients, n_controls])  # Assigning patient or control status
+})
+
+# Now, to encode categorical variables for logistic regression:
+data_encoded = pd.get_dummies(data, columns=['sex', 'family_history'], drop_first=True)
+
+# I can perform logistic regression
+# i: Logistic regression is used to predict the probability of a binary outcome (here, bladder cancer) based on predictor variables (listed above).
+logit_model = sm.Logit(data_encoded['bladder_cancer'].map({'Patient': 1, 'Control': 0}), 
+                       sm.add_constant(data_encoded[['age', 'vitamin_d', 'red_meat', 'fish', 'olive_oil', 'sex_Male', 'family_history_Yes']])).fit()
+
+# to perform t-test
+# i: The t-test compares the means of two groups (patients and controls) to see if they are statistically different from each other (contionuis variable like age here).
+t_stat, p_value = ttest_ind(data[data['bladder_cancer'] == 'Patient']['age'], data[data['bladder_cancer'] == 'Control']['age'])
+
+# I am goig to perform ANOVA
+# i: ANOVA is used to compare the means of more than two groups (like cancer stages: stage 1, 2, 3 and 4), but here I used similarly to the t-test for demonstration on this data.
+anova_result = f_oneway(data[data['bladder_cancer'] == 'Patient']['age'], data[data['bladder_cancer'] == 'Control']['age'])
+
+# now for chi-square test
+# i: The chi-square test is used to determine if there is a significant association between two categorical variables.
+chi_square_result = chi2_contingency(pd.crosstab(data['bladder_cancer'], data['sex']))
+
+# LEts, show results:
+print(logit_model.summary())
+print("T-test Result: t = {:.2f}, p = {:.3f}".format(t_stat, p_value))
+print("ANOVA Result: F = {:.2f}, p = {:.3f}".format(anova_result[0], anova_result[1]))
+print("Chi-square Test Result: chi2 = {:.2f}, p = {:.3f}".format(chi_square_result[0], chi_square_result[1]))
+SyntaxError: multiple statements found while compiling a single statement
+>>> 
+>>> 
+>>> # Now lets predict cancer mortality:
+>>> import numpy as np
+import pandas as pd
+from sklearn.linear_model import LogisticRegression
+from scipy import stats
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Sample 2:
+# Set seed for reproducibility
+np.random.seed(0)
+
+# Simulate data
+sample_size = 1500  # 750 patients and 750 controls
+age = np.random.normal(60, 10, sample_size)
+sex = np.random.choice(['Male', 'Female'], sample_size)
+vitamin_D = np.random.normal(30, 10, sample_size)
+red_meat_consumption = np.random.normal(5, 2, sample_size)
+fish_consumption = np.random.normal(3, 1, sample_size)
+olive_oil_consumption = np.random.normal(2, 0.5, sample_size)
+family_history_of_cancer = np.random.choice([0, 1], sample_size)
+stage_of_cancer = np.random.choice([1, 2, 3, 4], sample_size)
+bladder_cancer_mortality = np.random.choice([0, 1], sample_size)
+
+# Create DataFrame
+df = pd.DataFrame({
+    'Age': age,
+    'Sex': sex,
+    'Vitamin_D': vitamin_D,
+    'Red_Meat_Consumption': red_meat_consumption,
+    'Fish_Consumption': fish_consumption,
+    'Olive_Oil_Consumption': olive_oil_consumption,
+    'Family_History_of_Cancer': family_history_of_cancer,
+    'Stage_of_Cancer': stage_of_cancer,
+    'Bladder_Cancer_Mortality': bladder_cancer_mortality
+})
+
+# Encode categorical variables
+df['Sex'] = df['Sex'].apply(lambda x: 1 if x == 'Male' else 0)
+
+# Logistic Regression for bladder cancer mortality
+X = df.drop('Bladder_Cancer_Mortality', axis=1)
+y = df['Bladder_Cancer_Mortality']
+model = LogisticRegression()
+model.fit(X, y)
+
+# Logistic Regression Analysis
+logistic_regression_results = pd.DataFrame({
+    'Variable': X.columns,
+    'Coefficient': model.coef_[0],
+    'Odds Ratio': np.exp(model.coef_[0])
+})
+
+# T-test for age
+t_test_age = stats.ttest_ind(df[df['Bladder_Cancer_Mortality'] == 1]['Age'],
+                             df[df['Bladder_Cancer_Mortality'] == 0]['Age'])
+
+# ANOVA for stage of cancer
+anova_stage = stats.f_oneway(df[df['Stage_of_Cancer'] == 1]['Bladder_Cancer_Mortality'],
+                             df[df['Stage_of_Cancer'] == 2]['Bladder_Cancer_Mortality'],
+                             df[df['Stage_of_Cancer'] == 3]['Bladder_Cancer_Mortality'],
+                             df[df['Stage_of_Cancer'] == 4]['Bladder_Cancer_Mortality'])
+
+# Chi-square test for sex
+chi_square_sex = stats.chi2_contingency(pd.crosstab(df['Sex'], df['Bladder_Cancer_Mortality']))
+
+# Scatter plot of age and stage of cancer
+sns.scatterplot(x='Age', y='Stage_of_Cancer', hue='Bladder_Cancer_Mortality', data=df)
+plt.xlabel('Age')
+plt.ylabel('Stage of Cancer')
+plt.title('Scatter Plot of Age and Stage of Cancer by Mortality')
+plt.show()
+
+# Output the results
+print('Logistic Regression Results:\n', logistic_regression_results)
+print('\nT-test for Age:\n', t_test_age)
+print('\nANOVA for Stage of Cancer:\n', anova_stage)
+print('\nChi-square Test for Sex:\n', chi_square_sex)
+SyntaxError: multiple statements found while compiling a single statement
+>>> import numpy as np
+import pandas as pd
+from sklearn.linear_model import LogisticRegression
+from scipy import stats
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Sample 2:
+# Set seed for reproducibility
+np.random.seed(0)
+
+# Simulate data
+sample_size = 1500  # 750 patients and 750 controls
+age = np.random.normal(60, 10, sample_size)
+sex = np.random.choice(['Male', 'Female'], sample_size)
+vitamin_D = np.random.normal(30, 10, sample_size)
+red_meat_consumption = np.random.normal(5, 2, sample_size)
+fish_consumption = np.random.normal(3, 1, sample_size)
+olive_oil_consumption = np.random.normal(2, 0.5, sample_size)
+family_history_of_cancer = np.random.choice([0, 1], sample_size)
+stage_of_cancer = np.random.choice([1, 2, 3, 4], sample_size)
+bladder_cancer_mortality = np.random.choice([0, 1], sample_size)
+
+# Create DataFrame
+df = pd.DataFrame({
+    'Age': age,
+    'Sex': sex,
+    'Vitamin_D': vitamin_D,
+    'Red_Meat_Consumption': red_meat_consumption,
+    'Fish_Consumption': fish_consumption,
+    'Olive_Oil_Consumption': olive_oil_consumption,
+    'Family_History_of_Cancer': family_history_of_cancer,
+    'Stage_of_Cancer': stage_of_cancer,
+    'Bladder_Cancer_Mortality': bladder_cancer_mortality
+})
+
+# Encode categorical variables
+df['Sex'] = df['Sex'].apply(lambda x: 1 if x == 'Male' else 0)
+
+# Logistic Regression for bladder cancer mortality
+X = df.drop('Bladder_Cancer_Mortality', axis=1)
+y = df['Bladder_Cancer_Mortality']
+model = LogisticRegression()
+model.fit(X, y)
+
+# Logistic Regression Analysis
+logistic_regression_results = pd.DataFrame({
+    'Variable': X.columns,
+    'Coefficient': model.coef_[0],
+    'Odds Ratio': np.exp(model.coef_[0])
+})
+
+# T-test for age
+t_test_age = stats.ttest_ind(df[df['Bladder_Cancer_Mortality'] == 1]['Age'],
+                             df[df['Bladder_Cancer_Mortality'] == 0]['Age'])
+
+# ANOVA for stage of cancer
+anova_stage = stats.f_oneway(df[df['Stage_of_Cancer'] == 1]['Bladder_Cancer_Mortality'],
+                             df[df['Stage_of_Cancer'] == 2]['Bladder_Cancer_Mortality'],
+                             df[df['Stage_of_Cancer'] == 3]['Bladder_Cancer_Mortality'],
+                             df[df['Stage_of_Cancer'] == 4]['Bladder_Cancer_Mortality'])
+
+# Chi-square test for sex
+chi_square_sex = stats.chi2_contingency(pd.crosstab(df['Sex'], df['Bladder_Cancer_Mortality']))
+
+# Scatter plot of age and stage of cancer
+sns.scatterplot(x='Age', y='Stage_of_Cancer', hue='Bladder_Cancer_Mortality', data=df)
+plt.xlabel('Age')
+plt.ylabel('Stage of Cancer')
+plt.title('Scatter Plot of Age and Stage of Cancer by Mortality')
+plt.show()
+
+# Output the results
+print('Logistic Regression Results:\n', logistic_regression_results)
+print('\nT-test for Age:\n', t_test_age)
+print('\nANOVA for Stage of Cancer:\n', anova_stage)
+print('\nChi-square Test for Sex:\n', chi_square_sex)
