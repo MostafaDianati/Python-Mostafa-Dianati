@@ -1,7 +1,7 @@
 Python 3.8.2 (tags/v3.8.2:7b3ab59, Feb 25 2020, 23:03:10) [MSC v.1916 64 bit (AMD64)] on win32
 
 >>> #  Example 1:
-    #my first example is the same as R-script (same hypothesis):
+    #this example is the same as R-script number 2 (same hypothesis):
 import numpy as np
 import pandas as pd
 import statsmodels.api as sm
@@ -189,7 +189,7 @@ logistic_regression_results = pd.DataFrame({
 t_test_age = stats.ttest_ind(df[df['Bladder_Cancer_Mortality'] == 1]['Age'],
                              df[df['Bladder_Cancer_Mortality'] == 0]['Age'])
 
-# ANOVA for stage of cancer
+# ANOVA for the stage of cancer
 anova_stage = stats.f_oneway(df[df['Stage_of_Cancer'] == 1]['Bladder_Cancer_Mortality'],
                              df[df['Stage_of_Cancer'] == 2]['Bladder_Cancer_Mortality'],
                              df[df['Stage_of_Cancer'] == 3]['Bladder_Cancer_Mortality'],
